@@ -1,0 +1,57 @@
+# Home Assistant automations for living room light and TV based on time + motion.
+# Replace entity IDs with your real entities before use.
+
+- id: keep_light_and_tv_on_when_motion
+  alias: Keep Light and TV ON when Motion
+  description: If motion is detected, keep living room light and TV on.
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.living_room_motion
+      to: "on"
+  action:
+    - service: light.turn_on
+      target:
+        entity_id: light.living_room
+    - service: media_player.turn_on
+      target:
+        entity_id: media_player.living_room_tv
+
+- id: turn_off_living_room_light_daytime_after_no_motion
+  alias: Turn OFF Living Room Light (6AM-6PM) after 10m no motion
+  description: During 06:00-18:00, turn off living room light only if no motion for 10 minutes.
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.living_room_motion
+      to: "off"
+      for: "00:10:00"
+  condition:
+    - condition: time
+      after: "06:00:00"
+      before: "18:00:00"
+  action:
+    - service: light.turn_off
+      target:
+        entity_id: light.living_room
+
+- id: turn_off_tv_night_after_no_motion
+  alias: Turn OFF TV (7PM-7AM) after 10m no motion
+  description: During 19:00-07:00, turn off TV only if no motion for 10 minutes.
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.living_room_motion
+      to: "off"
+      for: "00:10:00"
+  condition:
+    - condition: or
+      conditions:
+        - condition: time
+          after: "19:00:00"
+        - condition: time
+          before: "07:00:00"
+  action:
+    - service: media_player.turn_off
+      target:
+        entity_id: media_player.living_room_tv
